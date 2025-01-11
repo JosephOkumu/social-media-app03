@@ -44,5 +44,15 @@ CREATE TABLE IF NOT EXISTS post_categories (
     FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
+-- POST_REACTIONS Table
+CREATE TABLE IF NOT EXISTS post_reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,     
+    post_id INTEGER NOT NULL,                 
+    user_id INTEGER NOT NULL,                 
+    reaction_type TEXT CHECK (reaction_type IN ('LIKE', 'DISLIKE')) NOT NULL,
+    FOREIGN KEY (post_id) REFERENCES posts(id),
+    FOREIGN KEY (user_id) REFERENCES users(id) 
+);
+
 
 
