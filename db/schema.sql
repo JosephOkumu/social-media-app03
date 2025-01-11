@@ -64,5 +64,11 @@ CREATE TABLE IF NOT EXISTS comment_reactions (
     FOREIGN KEY (user_id) REFERENCES users(id) 
 );
 
-
+-- SESSIONS Table
+CREATE TABLE IF NOT EXISTS sessions (
+    uuid TEXT PRIMARY KEY,                    
+    user_id INTEGER NOT NULL,                 
+    expires_at DATETIME NOT NULL,             
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 
