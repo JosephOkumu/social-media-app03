@@ -28,4 +28,11 @@ CREATE TABLE IF NOT EXISTS comments (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- CATEGORIES Table
+CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,     
+    name TEXT UNIQUE NOT NULL,                
+    description TEXT                          
+);
+
 
