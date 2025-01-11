@@ -54,5 +54,15 @@ CREATE TABLE IF NOT EXISTS post_reactions (
     FOREIGN KEY (user_id) REFERENCES users(id) 
 );
 
+-- COMMENT_REACTIONS Table
+CREATE TABLE IF NOT EXISTS comment_reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,     
+    comment_id INTEGER NOT NULL,              
+    user_id INTEGER NOT NULL,                 
+    reaction_type TEXT CHECK (reaction_type IN ('LIKE', 'DISLIKE')) NOT NULL,
+    FOREIGN KEY (comment_id) REFERENCES comments(id),
+    FOREIGN KEY (user_id) REFERENCES users(id) 
+);
+
 
 
