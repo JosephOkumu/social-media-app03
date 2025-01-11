@@ -3,7 +3,7 @@ package main
 import (
     "fmt"
     "log"
-    "forum/db" // import the db package
+    "forum/db"
     "net/http"
 )
 
@@ -13,12 +13,12 @@ func main() {
     if err != nil {
         log.Fatalf("Error initializing database: %v", err)
     }
-    defer db.Close() // Ensure the database is closed when the app stops
+    defer db.Close() 
 
-    // Your HTTP server and routes setup here
+    // INSERT HTTP SERVER AND ROUTES
 
     fmt.Println("Server started on :8080")
-    err = http.ListenAndServe(":8080", nil) // Replace nil with your router if needed
+    err = http.ListenAndServe(":8080", nil) 
     if err != nil {
         log.Fatalf("Error starting server: %v", err)
     }
