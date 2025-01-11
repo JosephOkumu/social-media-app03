@@ -36,4 +36,21 @@ func Initialize() error {
     return nil
 }
 
+// applySchema applies the SQL schema from the schema.sql file
+func applySchema() error {
+    schemaContent, err := os.ReadFile("./db/schema.sql")
+    if err != nil {
+        return fmt.Errorf("failed to read schema file: %v", err)
+    }
+
+    // Execute the SQL statements from the schema
+    _, err = DB.Exec(string(schemaContent))
+    if err != nil {
+        return fmt.Errorf("failed to execute schema SQL: %v", err)
+    }
+
+    log.Println("Schema applied successfully")
+    return nil
+}
+
 
