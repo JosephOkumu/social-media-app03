@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,      
     email TEXT UNIQUE NOT NULL,                
     username TEXT UNIQUE NOT NULL,             
-    password_hash TEXT NOT NULL,              
+    password TEXT NOT NULL,              
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP 
 );
 
@@ -71,4 +71,3 @@ CREATE TABLE IF NOT EXISTS sessions (
     expires_at DATETIME NOT NULL,             
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
