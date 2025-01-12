@@ -15,7 +15,7 @@ func main() {
     }
     defer db.Close() 
 
-    // INSERT HTTP SERVER AND ROUTES
+    // INSERT ROUTES
 
     fmt.Println("Server started on :8080")
     err = http.ListenAndServe(":8080", nil) 
