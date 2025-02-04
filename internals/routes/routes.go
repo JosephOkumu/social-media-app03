@@ -37,6 +37,9 @@ func RegisteringRoutes() *http.ServeMux {
 	mux.HandleFunc("/comments/create", auth.Middleware(http.HandlerFunc(comments.CreateComment)))
 	mux.HandleFunc("/comments/react", auth.Middleware(http.HandlerFunc(comments.ReactToComment)))
 
+	mux.HandleFunc("/auth/google", auth.InitiateGoogleAuth)
+mux.HandleFunc("/auth/google/callback", auth.HandleGoogleCallback)
+
 	// static
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	return mux

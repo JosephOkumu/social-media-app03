@@ -12,6 +12,9 @@
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Database Structure](#database-structure)
+- [Authentication](#authentication)
+  - [Local Authentication](#local-authentication)
+  - [Google OAuth](#google-oauth)
 - [Running the Application](#running-the-application)
 - [Credits](#credits)
     - [Contributors](#contributors)
@@ -36,7 +39,9 @@ graph TD
 ```
 
 ## Features
-- User authentication (register/login)
+- User authentication
+  - Local registration/login
+  - Google OAuth sign-in
 - Post creation with categories
 - Post creation with images
 - Commenting system with nested replies
@@ -61,6 +66,55 @@ graph TD
 - Categories (id, name, description)
 - Post reactions (likes/dislikes)
 - Comment reactions (likes/dislikes)
+
+## Authentication
+
+### Local Authentication
+Users can register and login using email/password credentials stored securely in the SQLite database.
+
+### Google OAuth
+The application supports Google OAuth 2.0 for seamless authentication. Here's how it works:
+
+#### Flow
+1. User clicks "Sign in with Google"
+2. User is redirected to Google's consent screen
+3. After consent, Google redirects back to our application
+4. Application verifies the user's identity and creates/updates account
+5. User is logged in and session is created
+
+#### Setting Up Google OAuth
+To enable Google authentication in your development environment:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google+ API and OAuth 2.0 APIs
+4. Configure OAuth consent screen:
+   - Go to "OAuth consent screen"
+   - Choose "External" user type
+   - Fill in required application information
+   - Add necessary scopes (email, profile)
+
+5. Create OAuth 2.0 credentials:
+   - Go to "Credentials"
+   - Click "Create Credentials" → "OAuth client ID"
+   - Choose "Web application"
+   - Add authorized redirect URIs:
+     ```
+     http://localhost:8080/auth/google/callback
+     ```
+   - Save your Client ID and Client Secret
+
+6. Update the application configuration:
+   - Set your Client ID and Client Secret in `auth/google.go`
+   ```go
+   var googleConfig = &GoogleConfig{
+       ClientID:     "your-client-id",
+       ClientSecret: "your-client-secret",
+       RedirectURI:  "http://localhost:8080/auth/google/callback",
+   }
+   ```
+
+
 
 ## Running the Application
 ```bash
