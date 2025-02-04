@@ -64,6 +64,12 @@ type GitHubUserInfo struct {
 	Location      string `json:"location"`       // Location (if available)
 }
 
+type FacebookUserInfo struct {
+	ID      string `json:"id"`       // Unique Facebook ID
+	Email   string `json:"email"`    
+	Name    string `json:"name"`     
+}
+
 // GoogleTokenResponse represents the OAuth token response
 type GoogleTokenResponse struct {
 	AccessToken  string `json:"access_token"`
