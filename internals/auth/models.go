@@ -86,6 +86,13 @@ type GitHubTokenResponse struct {
 	TokenType   string `json:"token_type"`
 }
 
+// FacebookTokenResponse represents the OAuth token response from Facebook
+type FacebookTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	ExpiresIn   int    `json:"expires_in"` // Token expiration time in seconds
+}
+
 type GitHubEmail struct {
 	Email    string `json:"email"`
 	Primary  bool   `json:"primary"`
