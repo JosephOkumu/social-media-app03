@@ -1,4 +1,4 @@
-# forum-image-upload
+# forum-authentication
 
 [![Go Report Card](https://img.shields.io/badge/go_version-1.23.4-green
 )](https://go.dev/dl/
@@ -64,13 +64,13 @@ graph TD
 
 ## Running the Application
 ```bash
-git clone https://learn.zone01kisumu.ke/git/hilaokello/forum-image-upload.git
-cd forum
+git clone https://learn.zone01kisumu.ke/git/hiombima/forum-authentication.git
+cd forum-authentication
 docker-compose build
 docker run 
 ```
 
-Visit `http://localhost:8080` in your browser.
+[Visit](http://localhost:8080) in your browser.
 
 ## Credits
 This project was developed as part of the curriculum at 01 Founders Coding School.
