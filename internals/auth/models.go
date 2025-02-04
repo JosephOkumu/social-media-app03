@@ -29,15 +29,31 @@ type GoogleConfig struct {
 	RedirectURI  string
 }
 
+// GitHubConfig holds the configuration for GitHub OAuth
+type GitHubConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
+}
+
 // GoogleUserInfo represents the user information received from Google
 type GoogleUserInfo struct {
 	ID            string `json:"id"`
 	Email         string `json:"email"`
 	VerifiedEmail bool   `json:"verified_email"`
 	Name          string `json:"name"`
+	Username      string `json:"username"`
 	GivenName     string `json:"given_name"`
 	FamilyName    string `json:"family_name"`
 	Picture       string `json:"picture"`
+}
+
+type GitHubUserInfo struct {
+	Username      string `json:"login"`          // GitHub username (login)
+	Email         string `json:"email"`          // Public email, if accessible
+	VerifiedEmail bool   `json:"verified_email"` // Whether the email is verified
+	Name          string `json:"name"`           // Full name (may be empty)
+	Location      string `json:"location"`       // Location (if available)
 }
 
 // GoogleTokenResponse represents the OAuth token response
@@ -49,6 +65,19 @@ type GoogleTokenResponse struct {
 	IDToken      string `json:"id_token"`
 }
 
+// GitHUbTokenResponse represents the OAuth token response
+type GitHubTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	Scope       string `json: "scope"`
+	TokenType   string `json:"token_type"`
+}
+
+type GitHubEmail struct {
+	Email    string `json:"email"`
+	Primary  bool   `json:"primary"`
+	Verified bool   `json:"verified"`
+}
+
 // Create a map to store state tokens to prevent CSRF attacks
 var stateTokens = make(map[string]time.Time)
 
@@ -57,4 +86,11 @@ var googleConfig = &GoogleConfig{
 	ClientID:     "163539294903-216klc89htmsk9kpigk6apf5q15n5e1b.apps.googleusercontent.com",
 	ClientSecret: "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",
 	RedirectURI:  "http://localhost:8080/auth/google/callback",
+}
+
+// Initialize Google configuration
+var githubConfig = &GitHubConfig{
+	ClientID:     "Ov23liYc9Bf6D3ehd3Yj",
+	ClientSecret: "befd89c13ee39ffb0326fe3e28ec63d41fe73d3b",
+	RedirectURI:  "http://localhost:8080/auth/github/callback",
 }
