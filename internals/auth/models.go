@@ -36,6 +36,14 @@ type GitHubConfig struct {
 	RedirectURI  string
 }
 
+// FacebookConfig holds the configuration for Facebook OAuth
+type FacebookConfig struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
+	Scopes       []string 
+}
+
 // GoogleUserInfo represents the user information received from Google
 type GoogleUserInfo struct {
 	ID            string `json:"id"`
@@ -94,3 +102,4 @@ var githubConfig = &GitHubConfig{
 	ClientSecret: "befd89c13ee39ffb0326fe3e28ec63d41fe73d3b",
 	RedirectURI:  "http://localhost:8080/auth/github/callback",
 }
+
