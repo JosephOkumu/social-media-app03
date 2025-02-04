@@ -27,6 +27,14 @@ func RegisteringRoutes() *http.ServeMux {
 	mux.HandleFunc("/login", auth.Login)
 	mux.HandleFunc("/logout", auth.Logout)
 
+	// Google Auth Routes.
+	mux.HandleFunc("/auth/google", auth.InitiateGoogleAuth)
+	mux.HandleFunc("/auth/google/callback", auth.HandleGoogleCallback)
+
+	// GitHub Auth Routes.
+	mux.HandleFunc("/auth/github", auth.InitiateGitHubAuth)
+	mux.HandleFunc("/auth/github/callback", auth.HandleGitHubCallback)
+
 	// Filter Routes.
 	mux.HandleFunc("/category", post.ViewPostsByCategory)
 	mux.HandleFunc("/userfilter", auth.Middleware(http.HandlerFunc(post.FilterbyUser)))
@@ -36,9 +44,6 @@ func RegisteringRoutes() *http.ServeMux {
 	mux.HandleFunc("/comments", comments.GetComments)
 	mux.HandleFunc("/comments/create", auth.Middleware(http.HandlerFunc(comments.CreateComment)))
 	mux.HandleFunc("/comments/react", auth.Middleware(http.HandlerFunc(comments.ReactToComment)))
-
-	mux.HandleFunc("/auth/google", auth.InitiateGoogleAuth)
-mux.HandleFunc("/auth/google/callback", auth.HandleGoogleCallback)
 
 	// static
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
