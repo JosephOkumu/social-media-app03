@@ -116,3 +116,10 @@ var githubConfig = &GitHubConfig{
 	RedirectURI:  "http://localhost:8080/auth/github/callback",
 }
 
+var facebookConfig = &FacebookConfig{
+	ClientID:     "633153499268120",
+	ClientSecret: "eb3df145964989f8f14fff86a85529d4",
+	RedirectURI:  "http://localhost:8080/auth/facebook/callback",
+	Scopes:       []string{"email"}, 
+}
+
