@@ -82,7 +82,7 @@ type GoogleTokenResponse struct {
 // GitHUbTokenResponse represents the OAuth token response
 type GitHubTokenResponse struct {
 	AccessToken string `json:"access_token"`
-	Scope       string `json: "scope"`
+	Scope       string `json:"scope"`
 	TokenType   string `json:"token_type"`
 }
 
