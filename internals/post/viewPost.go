@@ -54,12 +54,6 @@ func FetchPosts(userID int64) ([]Post, error) {
 		return nil, fmt.Errorf("error iterating post rows: %w", err)
 	}
 
-	// // Debug logging - remove in production
-	// for _, post := range posts {
-	// 	fmt.Printf("Fetched post: ID=%d, Title=%s, Image=%v\n",
-	// 		post.ID, post.Title, post.Image)
-	// }
-
 	return posts, nil
 }
 
