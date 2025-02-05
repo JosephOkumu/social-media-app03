@@ -170,7 +170,7 @@ func ServeAboutPage(w http.ResponseWriter, r *http.Request) {
 		fails.ErrorPageHandler(w, r, http.StatusNotFound)
 		return
 	}
-	
+
 	if r.URL.Path != "/about" {
 		fails.ErrorPageHandler(w, r, http.StatusNotFound)
 		return
