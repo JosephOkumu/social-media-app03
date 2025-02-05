@@ -20,7 +20,7 @@
     - [Contributors](#contributors)
 
 ## Description
-A web forum application that enables user communication through posts and comments. Users can register, create posts with images, comment, and interact through likes/dislikes. Posts can be categorized and filtered.
+A web forum application that enables user communication through posts and comments. Users can register using a `Username`, `Email`, `GitHub`, or `Google` account. After registration, they can create posts with images, comment on discussions, and engage through likes and dislikes. Posts can also be categorized and filtered for easier navigation.
 
 
 
