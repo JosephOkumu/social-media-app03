@@ -48,10 +48,10 @@
       <span>or</span>
     </div>
 
-    <form id="loginForm" aria-labelledby="loginFormHeader">
+    <form id="loginForm" method="POST" action="/login" metaria-labelledby="loginFormHeader">
       <div class="form-group">
-        <input type="email" id="email" name="email" placeholder=" " required aria-label="Email">
-        <label for="email">Email</label>
+        <input type="text" id="identifier" name="identifier" placeholder=" " required aria-label="Email or Username">
+        <label for="identifier">Email or User</label>
       </div>
 
       <div class="form-group">
@@ -73,7 +73,7 @@
     document.getElementById('loginForm').addEventListener('submit', async function (e) {
       e.preventDefault();
 
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('identifier').value;
       const password = document.getElementById('password').value;
       const errorMessage = document.getElementById('errorMessage');
       const button = document.querySelector('button');
@@ -82,7 +82,7 @@
 
       // Create FormData object
       const formData = new FormData();
-      formData.append('email', email);
+      formData.append('identifier', email);
 
       formData.append('password', password);
 
