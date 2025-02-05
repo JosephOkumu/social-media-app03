@@ -35,6 +35,10 @@ func RegisteringRoutes() *http.ServeMux {
 	mux.HandleFunc("/auth/github", auth.InitiateGitHubAuth)
 	mux.HandleFunc("/auth/github/callback", auth.HandleGitHubCallback)
 
+	// Facebook Auth Routes
+	mux.HandleFunc("/auth/facebook/login", auth.InitiateFacebookAuth)
+	mux.HandleFunc("/auth/facebook/callback", auth.HandleFacebookCallback)
+
 	// Filter Routes.
 	mux.HandleFunc("/category", post.ViewPostsByCategory)
 	mux.HandleFunc("/userfilter", auth.Middleware(http.HandlerFunc(post.FilterbyUser)))
