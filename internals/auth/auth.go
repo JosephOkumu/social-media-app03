@@ -16,6 +16,14 @@ import (
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseGlob("templates/*.html"))
+
+	// Check if user is already logged in.
+	session := CheckIfLoggedIn(w, r)
+	if session != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return 
+	}
+
 	if r.Method == http.MethodPost {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
