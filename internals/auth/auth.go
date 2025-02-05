@@ -25,7 +25,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		email := r.FormValue("email")
+		identifier := r.FormValue("identifier") // can either be username or email
 		password := r.FormValue("password")
 		ipAddress := r.RemoteAddr
 		users := ReadfromDb()
@@ -38,7 +38,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 		// validate credentials
 		for _, user := range users {
-			if user.Email == email && decryptPassword(user.Password, password) {
+				if (user.Email == identifier || user.UserName == identifier) && decryptPassword(user.Password, password) {
 				if oldsession, ok := store.GetSessionByUserId(user.ID); ok {
 					store.DeleteSession(oldsession.ID)
 				}
