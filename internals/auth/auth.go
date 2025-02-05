@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"forum/db"
@@ -15,75 +16,105 @@ import (
 )
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseGlob("templates/*.html"))
+    tmpl := template.Must(template.ParseGlob("templates/*.html"))
+    
+    // Check if user is already logged in
+    session := CheckIfLoggedIn(w, r)
+    if session != nil {
+        http.Redirect(w, r, "/", http.StatusFound)
+        return
+    }
 
-	// Check if user is already logged in.
-	session := CheckIfLoggedIn(w, r)
-	if session != nil {
-		http.Redirect(w, r, "/", http.StatusFound)
-		return 
-	}
+    if r.Method == http.MethodPost {
+        identifier := r.FormValue("identifier") // can either be username or email
+        password := r.FormValue("password")
+        ipAddress := r.RemoteAddr
+        users := ReadfromDb()
+        
+        if users == nil {
+            w.Header().Set("Content-Type", "application/json")
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(map[string]string{"error": "Failed to read users"})
+            return
+        }
 
-	if r.Method == http.MethodPost {
-		identifier := r.FormValue("identifier") // can either be username or email
-		password := r.FormValue("password")
-		ipAddress := r.RemoteAddr
-		users := ReadfromDb()
+        // First check if the identifier exists
+        var foundUser *User
+        isEmail := strings.Contains(identifier, "@")
+        
+        for _, user := range users {
+            if isEmail {
+                if user.Email == identifier {
+                    foundUser = &user
+                    break
+                }
+            } else {
+                if user.UserName == identifier {
+                    foundUser = &user
+                    break
+                }
+            }
+        }
 
-		if users == nil {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to read users"})
+        // If user not found, pop specific error
+        if foundUser == nil {
+            w.Header().Set("Content-Type", "application/json")
+            w.WriteHeader(http.StatusUnauthorized)
+            if isEmail {
+                json.NewEncoder(w).Encode(map[string]string{"error": "Email not found"})
+            } else {
+                json.NewEncoder(w).Encode(map[string]string{"error": "Username not found"})
+            }
+            return
+        }
 
-		}
-		// validate credentials
-		for _, user := range users {
-				if (user.Email == identifier || user.UserName == identifier) && decryptPassword(user.Password, password) {
-				if oldsession, ok := store.GetSessionByUserId(user.ID); ok {
-					store.DeleteSession(oldsession.ID)
-				}
-				session := store.CreateSession(user.ID, user.UserName, ipAddress)
-				if session == nil {
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusInternalServerError)
-					json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create session"})
-					return
-				}
+        // Check password if user is found
+        if !decryptPassword(foundUser.Password, password) {
+            w.Header().Set("Content-Type", "application/json")
+            w.WriteHeader(http.StatusUnauthorized)
+            json.NewEncoder(w).Encode(map[string]string{"error": "Incorrect password"})
+            return
+        }
 
-				// Set session cookie
-				http.SetCookie(w, &http.Cookie{
-					Name:     "session",
-					Value:    session.ID.String(),
-					Path:     "/",
-					HttpOnly: true,
-					MaxAge:   86400, // 24 hours
-				})
+        // At this point, both identifier and password are correct
+        if oldsession, ok := store.GetSessionByUserId(foundUser.ID); ok {
+            store.DeleteSession(oldsession.ID)
+        }
 
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(map[string]string{
-					"status":   "success",
-					"username": user.UserName,
-				})
-				return
-			}
-		}
-		// If credentials are invalid, send error JSON response
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid credentials"})
-		return
+        session := store.CreateSession(foundUser.ID, foundUser.UserName, ipAddress)
+        if session == nil {
+            w.Header().Set("Content-Type", "application/json")
+            w.WriteHeader(http.StatusInternalServerError)
+            json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create session"})
+            return
+        }
 
-	} else if r.Method == http.MethodGet {
-		if err := tmpl.ExecuteTemplate(w, "login.html", nil); err != nil {
+        // Set session cookie
+        http.SetCookie(w, &http.Cookie{
+            Name:     "session",
+            Value:    session.ID.String(),
+            Path:     "/",
+            HttpOnly: true,
+            MaxAge:   86400, // 24 hours
+        })
 
-			fails.ErrorPageHandler(w, r, http.StatusInternalServerError)
-			return
-		}
-	} else {
-		fails.ErrorPageHandler(w, r, http.StatusMethodNotAllowed)
-		return
-	}
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(map[string]string{
+            "status":   "success",
+            "username": foundUser.UserName,
+        })
+        return
+
+    } else if r.Method == http.MethodGet {
+        if err := tmpl.ExecuteTemplate(w, "login.html", nil); err != nil {
+            fails.ErrorPageHandler(w, r, http.StatusInternalServerError)
+            return
+        }
+    } else {
+        fails.ErrorPageHandler(w, r, http.StatusMethodNotAllowed)
+        return
+    }
 }
 
 func Middleware(next http.Handler) http.HandlerFunc {
