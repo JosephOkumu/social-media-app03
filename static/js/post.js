@@ -1,12 +1,42 @@
+// Fetch categories from backend
 fetch("/categories")
   .then((response) => response.json())
   .then((categories) => {
-    const categoriesSelect = document.getElementById("categories");
+    const categoriesGrid = document.getElementById("categories-grid");
+    categoriesGrid.className = "categories-grid";
+    
+    const icons = {
+      'Technology': 'fas fa-microchip',
+      'Health': 'fas fa-heartbeat',
+      'Education': 'fas fa-graduation-cap',
+      'Entertainment': 'fas fa-music',
+      'Travel': 'fas fa-plane',
+      'Food': 'fas fa-utensils',
+      'Business': 'fas fa-briefcase',
+      'Sports': 'fas fa-basketball-ball',
+      'Lifestyle': 'fas fa-cogs',
+      'Politics': 'fas fa-landmark'
+    };
+    
     categories.forEach((category) => {
-      const option = document.createElement("option");
-      option.value = category.ID;
-      option.textContent = category.Name;
-      categoriesSelect.appendChild(option);
+      const label = document.createElement("label");
+      label.className = "category-checkbox";
+      
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.name = "categories[]";
+      checkbox.value = category.ID;
+      
+      const icon = document.createElement("i");
+      icon.className = icons[category.Name] || 'fas fa-tag';
+      
+      const span = document.createElement("span");
+      span.textContent = category.Name;
+      
+      label.appendChild(checkbox);
+      label.appendChild(icon);
+      label.appendChild(span);
+      categoriesGrid.appendChild(label);
     });
   })
   .catch((error) => console.error("Error fetching categories:", error));
@@ -79,8 +109,8 @@ document.querySelector("form").addEventListener("submit", async function(event) 
   const title = document.getElementById("title").value.trim();
   const content = document.getElementById("content").value.trim();
   const categories = Array.from(
-      document.getElementById("categories").selectedOptions
-  ).map(option => option.value);
+    document.querySelectorAll('input[name="categories[]"]:checked')
+  ).map(checkbox => checkbox.value);
   const image = document.getElementById("image").files[0];
   //check if image size is above 20mbs
   const maxSizeInBytes = 20 * 1024 * 1024;
