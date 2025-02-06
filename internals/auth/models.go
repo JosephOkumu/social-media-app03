@@ -41,7 +41,7 @@ type FacebookConfig struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURI  string
-	Scopes       []string 
+	Scopes       []string
 }
 
 // GoogleUserInfo represents the user information received from Google
@@ -65,9 +65,9 @@ type GitHubUserInfo struct {
 }
 
 type FacebookUserInfo struct {
-	ID      string `json:"id"`       // Unique Facebook ID
-	Email   string `json:"email"`    
-	Name    string `json:"name"`     
+	ID    string `json:"id"` // Unique Facebook ID
+	Email string `json:"email"`
+	Name  string `json:"name"`
 }
 
 // GoogleTokenResponse represents the OAuth token response
@@ -82,7 +82,7 @@ type GoogleTokenResponse struct {
 // GitHUbTokenResponse represents the OAuth token response
 type GitHubTokenResponse struct {
 	AccessToken string `json:"access_token"`
-	Scope       string `json: "scope"`
+	Scope       string `json:"scope"`
 	TokenType   string `json:"token_type"`
 }
 
@@ -120,6 +120,5 @@ var facebookConfig = &FacebookConfig{
 	ClientID:     "633153499268120",
 	ClientSecret: "eb3df145964989f8f14fff86a85529d4",
 	RedirectURI:  "http://localhost:8080/auth/facebook/callback",
-	Scopes:       []string{"email"}, 
+	Scopes:       []string{"email"},
 }
-

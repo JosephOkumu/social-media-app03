@@ -210,6 +210,6 @@ func generateUsernameFromFacebook(userInfo *FacebookUserInfo) string {
 			clean = clean[:20]
 		}
 	}
-	
+
 	return clean
 }

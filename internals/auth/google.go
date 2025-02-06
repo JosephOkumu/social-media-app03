@@ -14,7 +14,6 @@ import (
 	"time"
 )
 
-
 // generateStateToken creates a random state token for OAuth flow
 func generateStateToken() (string, error) {
 	b := make([]byte, 32)

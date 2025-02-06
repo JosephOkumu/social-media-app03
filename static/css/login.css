@@ -388,6 +388,53 @@
     position: relative;
   }
 
+  /* Add these styles to your login.css file */
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  color: #818384;
+  display: flex;
+  align-items: center;
+  width: 26px;
+  height: 26px;
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.password-toggle svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2px;
+}
+
+/* Adjust the password input padding to accommodate the button */
+.password-wrapper input[type="password"],
+.password-wrapper input[type="text"] {
+  padding-right: 40px;
+}
+
+/* Ensure the label doesn't overlap with the eye icon */
+.password-wrapper label {
+  z-index: 1;
+}
+
+/* Maintain focus styles when clicking the toggle */
+.password-wrapper input:focus ~ .password-toggle {
+  color: #D7DADC;
+} */
+
   input {
     width: 100%;
     padding: 0.8rem;

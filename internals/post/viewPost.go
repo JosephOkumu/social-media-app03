@@ -54,12 +54,6 @@ func FetchPosts(userID int64) ([]Post, error) {
 		return nil, fmt.Errorf("error iterating post rows: %w", err)
 	}
 
-	// // Debug logging - remove in production
-	// for _, post := range posts {
-	// 	fmt.Printf("Fetched post: ID=%d, Title=%s, Image=%v\n",
-	// 		post.ID, post.Title, post.Image)
-	// }
-
 	return posts, nil
 }
 
@@ -170,7 +164,7 @@ func ServeAboutPage(w http.ResponseWriter, r *http.Request) {
 		fails.ErrorPageHandler(w, r, http.StatusNotFound)
 		return
 	}
-	
+
 	if r.URL.Path != "/about" {
 		fails.ErrorPageHandler(w, r, http.StatusNotFound)
 		return
