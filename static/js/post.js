@@ -164,23 +164,6 @@ document.querySelector("form").addEventListener("submit", async function(event) 
   }
 });
 
-// Populate categories dropdown
-fetch("/categories")
-  .then((response) => response.json())
-  .then((categories) => {
-    const categoriesSelect = document.getElementById("categories");
-    categories.forEach((category) => {
-      const option = document.createElement("option");
-      option.value = category.ID;
-      option.textContent = category.Name;
-      categoriesSelect.appendChild(option);
-    });
-  })
-  .catch((error) => {
-    console.error("Error fetching categories:", error);
-    notificationManager.show("Failed to load categories", "error");
-  });
-
 /**
  * Function to display a notification
  * @param {string} message - The message to display
