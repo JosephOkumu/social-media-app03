@@ -69,6 +69,16 @@ func HandleFacebookCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if user exists in our database
+	users := ReadfromDb()
+	var existingUser *User
+	for _, user := range users {
+		if user.Email == userInfo.Email {
+			existingUser = &user
+			break
+		}
+	}
+
 	var user User
 	if existingUser == nil {
 		// Create new user
