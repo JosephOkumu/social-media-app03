@@ -100,8 +100,8 @@ func HandleGitHubCallback(w http.ResponseWriter, r *http.Request) {
 			if item.Email == user.Email {
 				user.ID = item.ID
 				break
+			}
 		}
-	}
 	} else {
 		user = *existingUser
 		if oldsession, ok := store.GetSessionByUserId(user.ID); ok {
