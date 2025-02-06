@@ -69,16 +69,6 @@ func HandleFacebookCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if user exists in our database
-	users := ReadfromDb()
-	var existingUser *User
-	for _, user := range users {
-		if user.Email == userInfo.Email {
-			existingUser = &user
-			break
-		}
-	}
-
 	var user User
 	if existingUser == nil {
 		// Create new user
@@ -94,8 +84,20 @@ func HandleFacebookCallback(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
+		// attach user id for a user with that email
+		users := ReadfromDb()
+		for _, item := range users {
+			if item.Email == user.Email {
+				user.ID = item.ID
+				break
+			}
+		}
 	} else {
 		user = *existingUser
+		// delete a user session when a user logs in with another browser.
+		if oldsession, ok := store.GetSessionByUserId(user.ID); ok {
+			store.DeleteSession(oldsession.ID)
+		}
 	}
 
 	// Create session
