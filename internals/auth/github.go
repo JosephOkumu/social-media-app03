@@ -94,6 +94,14 @@ func HandleGitHubCallback(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
+
+		users := ReadfromDb()
+		for _, item := range users {
+			if item.Email == user.Email {
+				user.ID = item.ID
+				break
+		}
+	}
 	} else {
 		user = *existingUser
 		if oldsession, ok := store.GetSessionByUserId(user.ID); ok {
