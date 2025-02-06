@@ -101,14 +101,26 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 			Password:  "", // Google-authenticated users don't need a password
 			CreatedAt: time.Now(),
 		}
+
 		err = SaveUserToDb(user)
 		if err != nil {
 			log.Printf("Error saving user to database: %v", err)
 			http.Error(w, "Failed to create user", http.StatusInternalServerError)
 			return
 		}
+
+		users := ReadfromDb()
+		for _, item := range users {
+			if item.Email == user.Email {
+				user.ID = item.ID
+				break
+			}
+		}
 	} else {
 		user = *existingUser
+		if oldsession, ok := store.GetSessionByUserId(user.ID); ok {
+			store.DeleteSession(oldsession.ID)
+		}
 	}
 
 	// Create session
@@ -205,8 +217,8 @@ func generateUsername(userInfo *GoogleUserInfo) string {
 	reg := regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 	clean := reg.ReplaceAllString(base, "-")
 
-	// Normalize to lowercase
-	clean = strings.ToLower(clean)
+	// Normalize to title case
+	clean = titleCase(clean)
 
 	// Trim length (3-20 characters is common for usernames)
 	if len(clean) > 20 {
@@ -222,4 +234,14 @@ func generateUsername(userInfo *GoogleUserInfo) string {
 	}
 
 	return clean
+}
+
+func titleCase(s string) string {
+	words := strings.Fields(s)
+	for i, word := range words {
+		if len(word) > 0 {
+			words[i] = strings.ToUpper(string(word[0])) + strings.ToLower(word[1:])
+		}
+	}
+	return strings.Join(words, " ")
 }
