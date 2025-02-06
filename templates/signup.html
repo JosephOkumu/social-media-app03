@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,22 +13,41 @@
 <body>
   <div class="background-design">
     <svg class="wave" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
-      <path fill="#D7DADC" fill-opacity="0.1" d="M0,160L48,170.7C96,181,192,203,288,186.7C384,171,480,117,576,117.3C672,117,768,171,864,197.3C960,224,1056,224,1152,197.3C1248,171,1344,117,1392,90.7L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-      <path fill="#343536" fill-opacity="0.1" d="M0,96L48,122.7C96,149,192,203,288,224C384,245,480,235,576,202.7C672,171,768,117,864,122.7C960,128,1056,192,1152,213.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+      <path fill="#D7DADC" fill-opacity="0.1"
+        d="M0,160L48,170.7C96,181,192,203,288,186.7C384,171,480,117,576,117.3C672,117,768,171,864,197.3C960,224,1056,224,1152,197.3C1248,171,1344,117,1392,90.7L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+      </path>
+      <path fill="#343536" fill-opacity="0.1"
+        d="M0,96L48,122.7C96,149,192,203,288,224C384,245,480,235,576,202.7C672,171,768,117,864,122.7C960,128,1056,192,1152,213.3C1248,235,1344,213,1392,202.7L1440,192L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z">
+      </path>
     </svg>
   </div>
 
   <div class="signup-container">
     <h1>Create Account</h1>
-   
-      <button class="google-btn" onclick="window.location.href='/auth/google'">
-        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDQ4IDQ4Ij48cGF0aCBmaWxsPSIjRkZDMTA3IiBkPSJNNDMuNjExLDIwLjA4M0g0MlYyMEgyNHY4aDExLjMwM2MtMS42NDksNC42NTctNi4wOCw4LTExLjMwMyw4Yy02LjYyNywwLTEyLTUuMzczLTEyLTEyYzAtNi42MjcsNS4zNzMtMTIsMTItMTJjMy4wNTksMCw1Ljg0MiwxLjE1NCw3Ljk2MSwzLjAzOWw1LjY1Ny01LjY1N0MzNC4wNDYsNi4wNTMsMjkuMjY4LDQsMjQsNEMxMi45NTUsNCw0LDEyLjk1NSw0LDI0YzAsMTEuMDQ1LDguOTU1LDIwLDIwLDIwYzExLjA0NSwwLDIwLTguOTU1LDIwLTIwQzQ0LDIyLjY1OSw0My44NjIsMjEuMzUsNDMuNjExLDIwLjA4M3oiPjwvcGF0aD48cGF0aCBmaWxsPSIjRkYzRDAwIiBkPSJNNi4zMDYsMTQuNjkxbDYuNTcxLDQuODE5QzE0LjY1NSwxNS4xMDgsMTguOTYxLDEyLDI0LDEyYzMuMDU5LDAsNS44NDIsMS4xNTQsNy45NjEsMy4wMzlsNS42NTctNS42NTdDMzQuMDQ2LDYuMDUzLDI5LjI2OCw0LDI0LDRDMTYuMzE4LDQsOS42NTYsOC4zMzcsNi4zMDYsMTQuNjkxeiI+PC9wYXRoPjxwYXRoIGZpbGw9IiM0Q0FGNTAiIGQ9Ik0yNCw0NGM1LjE2NiwwLDkuODYtMS45NzcsMTMuNDA5LTUuMTkybC02LjE5LTUuMjM4QzI5LjIxMSwzNS4wOTEsMjYuNzE1LDM2LDI0LDM2Yy01LjIwMiwwLTkuNjE5LTMuMzE3LTExLjI4My03Ljk0NmwtNi41MjIsNS4wMjVDOS41MDUsMzkuNTU2LDE2LjIyNyw0NCwyNCw0NHoiPjwvcGF0aD48cGF0aCBmaWxsPSIjMTk3NkQyIiBkPSJNNDMuNjExLDIwLjA4M0g0MlYyMEgyNHY4aDExLjMwM2MtMC43OTIsMi4yMzctMi4yMzEsNC4xNjYtNC4wODcsNS41NzFjMC4wMDEtMC4wMDEsMC4wMDItMC4wMDEsMC4wMDMtMC4wMDJsNi4xOSw1LjIzOEMzNi45NzEsMzkuMjA1LDQ0LDM0LDQ0LDI0QzQ0LDIyLjY1OSw0My44NjIsMjEuMzUsNDMuNjExLDIwLjA4M3oiPjwvcGF0aD48L3N2Zz4=" alt="Google logo">
-        Continue with Google
-      </button>
 
-      <div class="separator">
-        <span>or</span>
-      </div>
+    <button class="google-btn" onclick="window.location.href='/auth/google'">
+      <img
+        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxOCIgdmlld0JveD0iMCAwIDQ4IDQ4Ij48cGF0aCBmaWxsPSIjRkZDMTA3IiBkPSJNNDMuNjExLDIwLjA4M0g0MlYyMEgyNHY4aDExLjMwM2MtMS42NDksNC42NTctNi4wOCw4LTExLjMwMyw4Yy02LjYyNywwLTEyLTUuMzczLTEyLTEyYzAtNi42MjcsNS4zNzMtMTIsMTItMTJjMy4wNTksMCw1Ljg0MiwxLjE1NCw3Ljk2MSwzLjAzOWw1LjY1Ny01LjY1N0MzNC4wNDYsNi4wNTMsMjkuMjY4LDQsMjQsNEMxMi45NTUsNCw0LDEyLjk1NSw0LDI0YzAsMTEuMDQ1LDguOTU1LDIwLDIwLDIwYzExLjA0NSwwLDIwLTguOTU1LDIwLTIwQzQ0LDIyLjY1OSw0My44NjIsMjEuMzUsNDMuNjExLDIwLjA4M3oiPjwvcGF0aD48cGF0aCBmaWxsPSIjRkYzRDAwIiBkPSJNNi4zMDYsMTQuNjkxbDYuNTcxLDQuODE5QzE0LjY1NSwxNS4xMDgsMTguOTYxLDEyLDI0LDEyYzMuMDU5LDAsNS44NDIsMS4xNTQsNy45NjEsMy4wMzlsNS42NTctNS42NTdDMzQuMDQ2LDYuMDUzLDI5LjI2OCw0LDI0LDRDMTYuMzE4LDQsOS42NTYsOC4zMzcsNi4zMDYsMTQuNjkxeiI+PC9wYXRoPjxwYXRoIGZpbGw9IiM0Q0FGNTAiIGQ9Ik0yNCw0NGM1LjE2NiwwLDkuODYtMS45NzcsMTMuNDA5LTUuMTkybC02LjE5LTUuMjM4QzI5LjIxMSwzNS4wOTEsMjYuNzE1LDM2LDI0LDM2Yy01LjIwMiwwLTkuNjE5LTMuMzE3LTExLjI4My03Ljk0NmwtNi41MjIsNS4wMjVDOS41MDUsMzkuNTU2LDE2LjIyNyw0NCwyNCw0NHoiPjwvcGF0aD48cGF0aCBmaWxsPSIjMTk3NkQyIiBkPSJNNDMuNjExLDIwLjA4M0g0MlYyMEgyNHY4aDExLjMwM2MtMC43OTIsMi4yMzctMi4yMzEsNC4xNjYtNC4wODcsNS41NzFjMC4wMDEtMC4wMDEsMC4wMDItMC4wMDEsMC4wMDMtMC4wMDJsNi4xOSw1LjIzOEMzNi45NzEsMzkuMjA1LDQ0LDM0LDQ0LDI0QzQ0LDIyLjY1OSw0My44NjIsMjEuMzUsNDMuNjExLDIwLjA4M3oiPjwvcGF0aD48L3N2Zz4="
+        alt="Google logo">
+      Continue with Google
+    </button>
+
+    <button class="google-btn" onclick="window.location.href='/auth/github'">
+      <img src="static/images/github-mark.svg" alt="GitHub logo">
+      Continue with GitHub
+    </button>
+
+    <button class="facebook-btn" onclick="window.location.href='/auth/facebook/login'">
+      <img
+        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSIjMTg3N0YyIiBkPSJNMTIuMDAxIDIuMDAyYy01LjUyMSAwLTkuOTk3IDQuNDc2LTkuOTk3IDkuOTk4IDAgNC45OTEgMy42NTcgOS4xMjcgOC40MjMgOS44ODl2LTYuOTg3aC0yLjQ1di0yLjkxMWgyLjQ1di0yLjIxNmMwLTIuNDQ0IDEuNDktMy43NzggMy42NDctMy43NzggMS4wNTQgMCAxLjk2LjA3OCAyLjI3NS4xMTN2Mi43MDVsLTEuNTYzLjAwMWMtMS4yMjQgMC0xLjQ2MS41ODEtMS40NjEgMS40MzR2MS45NDdoMi45MDNsLS4zNzggMi45MTFoLTIuNTI1djYuOTg3YzQuNzY2LS43NjIgOC40MjItNC44OTggOC40MjItOS44ODkgMC01LjUyMi00LjQ3Ni05Ljk5OC05Ljk5OC05Ljk5OHoiPjwvcGF0aD48L3N2Zz4="
+        alt="Facebook logo">
+      Continue with Facebook
+    </button>
+    
+    <div class="separator">
+      <span>or</span>
+    </div>
+    
     <form id="signupForm" aria-labelledby="signupFormHeader">
       <div class="form-group">
         <input type="text" id="username" name="username" placeholder=" " required aria-label="Username">
@@ -38,17 +58,18 @@
         <input type="email" id="email" name="email" placeholder=" " required aria-label="Email">
         <label for="email">Email</label>
       </div>
-      
+
       <div class="form-group">
         <input type="password" id="password" name="password" placeholder=" " required aria-label="Password">
         <label for="password">Password</label>
       </div>
 
       <div class="form-group">
-        <input type="password" id="confirmPassword" name="confirmPassword" placeholder=" " required aria-label="Confirm Password">
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder=" " required
+          aria-label="Confirm Password">
         <label for="confirmPassword">Confirm Password</label>
       </div>
-      
+
       <button type="submit">Create Account</button>
       <div id="errorMessage" class="error-message" role="alert"></div>
     </form>
@@ -60,9 +81,9 @@
   </div>
 
   <script>
-    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    document.getElementById('signupForm').addEventListener('submit', async function (e) {
       e.preventDefault();
-      
+
       const username = document.getElementById('username').value;
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -76,9 +97,9 @@
         return;
       }
       function validateEmail(email) {
-  var re = /\S+@\S+\.\S+/;
-  return re.test(email);
-}
+        var re = /\S+@\S+\.\S+/;
+        return re.test(email);
+      }
       if (!validateEmail(email)) {
         errorMessage.textContent = 'Invalid email address';
         errorMessage.style.display = 'block';
@@ -98,40 +119,41 @@
       formData.append('password', password);
 
       try {
-    const response = await fetch('/signup', {
-        method: 'POST',
-        headers: {
+        const response = await fetch('/signup', {
+          method: 'POST',
+          headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
+          },
+          body: new URLSearchParams({
             'email': email,
             'password': password,
             'username': username
-        })
-    });
+          })
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (response.ok) {
-        // Success animation
-        button.style.width = '50px';
-        button.innerHTML = '✓';
-        button.style.borderRadius = '25px';
-        
-        // Redirect after animation
-        setTimeout(() => {
+        if (response.ok) {
+          // Success animation
+          button.style.width = '50px';
+          button.innerHTML = '✓';
+          button.style.borderRadius = '25px';
+
+          // Redirect after animation
+          setTimeout(() => {
             window.location.href = '/login';
-        }, 1000);
-    } else {
-        errorMessage.textContent = data.error || 'Signup failed. Please try again.';
+          }, 1000);
+        } else {
+          errorMessage.textContent = data.error || 'Signup failed. Please try again.';
+          errorMessage.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = 'An error occurred. Please try again later.';
         errorMessage.style.display = 'block';
-    }
-} catch (error) {
-    console.error('Error:', error);
-    errorMessage.textContent = 'An error occurred. Please try again later.';
-    errorMessage.style.display = 'block';
-}
+      }
     });
   </script>
 </body>
+
 </html>

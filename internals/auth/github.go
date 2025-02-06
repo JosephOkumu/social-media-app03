@@ -104,6 +104,9 @@ func HandleGitHubCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	} else {
 		user = *existingUser
+		if oldsession, ok := store.GetSessionByUserId(user.ID); ok {
+			store.DeleteSession(oldsession.ID)
+		}
 	}
 
 	// Create session

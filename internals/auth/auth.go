@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"forum/db"
@@ -16,8 +17,16 @@ import (
 
 func Login(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.Must(template.ParseGlob("templates/*.html"))
+
+	// Check if user is already logged in
+	session := CheckIfLoggedIn(w, r)
+	if session != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+
 	if r.Method == http.MethodPost {
-		email := r.FormValue("email")
+		identifier := r.FormValue("identifier") // can either be username or email
 		password := r.FormValue("password")
 		ipAddress := r.RemoteAddr
 		users := ReadfromDb()
@@ -26,49 +35,79 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to read users"})
-
+			return
 		}
-		// validate credentials
+
+		// First check if the identifier exists
+		var foundUser *User
+		isEmail := strings.Contains(identifier, "@")
+
 		for _, user := range users {
-			if user.Email == email && decryptPassword(user.Password, password) {
-				if oldsession, ok := store.GetSessionByUserId(user.ID); ok {
-					store.DeleteSession(oldsession.ID)
+			if isEmail {
+				if user.Email == identifier {
+					foundUser = &user
+					break
 				}
-				session := store.CreateSession(user.ID, user.UserName, ipAddress)
-				if session == nil {
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusInternalServerError)
-					json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create session"})
-					return
+			} else {
+				if user.UserName == identifier {
+					foundUser = &user
+					break
 				}
-
-				// Set session cookie
-				http.SetCookie(w, &http.Cookie{
-					Name:     "session",
-					Value:    session.ID.String(),
-					Path:     "/",
-					HttpOnly: true,
-					MaxAge:   86400, // 24 hours
-				})
-
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(map[string]string{
-					"status":   "success",
-					"username": user.UserName,
-				})
-				return
 			}
 		}
-		// If credentials are invalid, send error JSON response
+
+		// If user not found, pop specific error
+		if foundUser == nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			if isEmail {
+				json.NewEncoder(w).Encode(map[string]string{"error": "Email not found"})
+			} else {
+				json.NewEncoder(w).Encode(map[string]string{"error": "Username not found"})
+			}
+			return
+		}
+
+		// Check password if user is found
+		if !decryptPassword(foundUser.Password, password) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Incorrect password"})
+			return
+		}
+
+		// At this point, both identifier and password are correct
+		if oldsession, ok := store.GetSessionByUserId(foundUser.ID); ok {
+			store.DeleteSession(oldsession.ID)
+		}
+
+		session := store.CreateSession(foundUser.ID, foundUser.UserName, ipAddress)
+		if session == nil {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create session"})
+			return
+		}
+
+		// Set session cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    session.ID.String(),
+			Path:     "/",
+			HttpOnly: true,
+			MaxAge:   86400, // 24 hours
+		})
+
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid credentials"})
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status":   "success",
+			"username": foundUser.UserName,
+		})
 		return
 
 	} else if r.Method == http.MethodGet {
 		if err := tmpl.ExecuteTemplate(w, "login.html", nil); err != nil {
-
 			fails.ErrorPageHandler(w, r, http.StatusInternalServerError)
 			return
 		}

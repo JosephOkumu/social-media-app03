@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,45 +12,34 @@ import (
 	"time"
 )
 
-// generateStateToken creates a random state token for OAuth flow
-func generateStateToken() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	state := base64.URLEncoding.EncodeToString(b)
-	stateTokens[state] = time.Now().Add(15 * time.Minute)
-	return state, nil
-}
-
-// InitiateGoogleAuth starts the Google OAuth flow
-func InitiateGoogleAuth(w http.ResponseWriter, r *http.Request) {
+// InitiateFacebookAuth starts the Facebook OAuth flow
+func InitiateFacebookAuth(w http.ResponseWriter, r *http.Request) {
 	state, err := generateStateToken()
 	if err != nil {
-		log.Printf("Error generating state token: %v", err)
 		http.Error(w, "Failed to generate state token", http.StatusInternalServerError)
 		return
 	}
 
 	authURL := fmt.Sprintf(
-		"https://accounts.google.com/o/oauth2/v2/auth?"+
+		"https://www.facebook.com/v12.0/dialog/oauth?"+
 			"client_id=%s"+
 			"&redirect_uri=%s"+
 			"&response_type=code"+
-			"&scope=email+profile"+
-			"&state=%s"+
-			"&access_type=offline"+
-			"&prompt=consent",
-		url.QueryEscape(googleConfig.ClientID),
-		url.QueryEscape(googleConfig.RedirectURI),
+			"&scope=%s"+
+			"&state=%s",
+		url.QueryEscape(facebookConfig.ClientID),
+		url.QueryEscape(facebookConfig.RedirectURI),
+		url.QueryEscape(strings.Join(facebookConfig.Scopes, " ")),
 		url.QueryEscape(state),
 	)
 
 	http.Redirect(w, r, authURL, http.StatusTemporaryRedirect)
 }
 
-// HandleGoogleCallback processes the callback from Google
-func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
+// HandleFacebookCallback processes the callback from Facebook
+func HandleFacebookCallback(w http.ResponseWriter, r *http.Request) {
+	log.Println("Handling Facebook callback...")
+
 	// Extract state and code from query parameters
 	state := r.URL.Query().Get("state")
 	code := r.URL.Query().Get("code")
@@ -67,7 +54,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	delete(stateTokens, state)
 
 	// Exchange code for token
-	tokenResponse, err := exchangeCodeForToken(code)
+	tokenResponse, err := exchangeCodeForFacebookToken(code)
 	if err != nil {
 		log.Printf("Error exchanging code for token: %v", err)
 		http.Error(w, "Failed to exchange code for token", http.StatusInternalServerError)
@@ -75,7 +62,7 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user info using the access token
-	userInfo, err := getGoogleUserInfo(tokenResponse.AccessToken)
+	userInfo, err := getFacebookUserInfo(tokenResponse.AccessToken)
 	if err != nil {
 		log.Printf("Error getting user info: %v", err)
 		http.Error(w, "Failed to get user info", http.StatusInternalServerError)
@@ -97,8 +84,8 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		// Create new user
 		user = User{
 			Email:     userInfo.Email,
-			UserName:  generateUsername(userInfo),
-			Password:  "", // Google-authenticated users don't need a password
+			UserName:  generateUsernameFromFacebook(userInfo),
+			Password:  "", // Facebook-authenticated users don't need a password
 			CreatedAt: time.Now(),
 		}
 		err = SaveUserToDb(user)
@@ -128,74 +115,78 @@ func HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   86400, // 24 hours
 	})
 
-	// Redirect to home page
 	http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 }
 
-// exchangeCodeForToken exchanges the authorization code for tokens
-func exchangeCodeForToken(code string) (*GoogleTokenResponse, error) {
+// exchangeCodeForFacebookToken exchanges the authorization code for tokens
+func exchangeCodeForFacebookToken(code string) (*FacebookTokenResponse, error) {
 	data := url.Values{}
 	data.Set("code", code)
-	data.Set("client_id", googleConfig.ClientID)
-	data.Set("client_secret", googleConfig.ClientSecret)
-	data.Set("redirect_uri", googleConfig.RedirectURI)
+	data.Set("client_id", facebookConfig.ClientID)
+	data.Set("client_secret", facebookConfig.ClientSecret)
+	data.Set("redirect_uri", facebookConfig.RedirectURI)
 	data.Set("grant_type", "authorization_code")
 
-	resp, err := http.PostForm("https://oauth2.googleapis.com/token", data)
+	resp, err := http.PostForm("https://graph.facebook.com/v12.0/oauth/access_token", data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to exchange code for token: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	var tokenResponse GoogleTokenResponse
+	var tokenResponse FacebookTokenResponse
 	if err := json.Unmarshal(body, &tokenResponse); err != nil {
-		return nil, err
+		log.Printf("Error unmarshalling token response: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal token response: %v", err)
 	}
 
 	return &tokenResponse, nil
 }
 
-// getGoogleUserInfo retrieves the user's information from Google
-func getGoogleUserInfo(accessToken string) (*GoogleUserInfo, error) {
-	req, err := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v2/userinfo", nil)
+// getFacebookUserInfo retrieves the user's information from Facebook
+func getFacebookUserInfo(accessToken string) (*FacebookUserInfo, error) {
+	req, err := http.NewRequest("GET", "https://graph.facebook.com/v12.0/me", nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	// Specify the fields you want to retrieve
+	q := req.URL.Query()
+	q.Add("fields", "id,email,name")
+	req.URL.RawQuery = q.Encode()
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch user info: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %v", err)
 	}
 
-	var userInfo GoogleUserInfo
+	var userInfo FacebookUserInfo
 	if err := json.Unmarshal(body, &userInfo); err != nil {
-		return nil, err
+		log.Printf("Error unmarshalling user info: %v", err)
+		return nil, fmt.Errorf("failed to unmarshal user info: %v", err)
 	}
 
 	return &userInfo, nil
 }
 
-// generateUsername generates a username based on the user's information
-func generateUsername(userInfo *GoogleUserInfo) string {
+// generateUsernameFromFacebook generates a username based on the user's information
+func generateUsernameFromFacebook(userInfo *FacebookUserInfo) string {
 	var base string
 
-	// Prefer name components if available
-	if userInfo.GivenName != "" && userInfo.FamilyName != "" {
-		base = userInfo.GivenName + "." + userInfo.FamilyName
-	} else if userInfo.Name != "" {
+	// Use the user's name or email as the base for the username
+	if userInfo.Name != "" {
 		base = userInfo.Name
 	} else {
 		base = strings.Split(userInfo.Email, "@")[0]
@@ -205,7 +196,6 @@ func generateUsername(userInfo *GoogleUserInfo) string {
 	reg := regexp.MustCompile(`[^a-zA-Z0-9_-]`)
 	clean := reg.ReplaceAllString(base, "-")
 
-	// Normalize to lowercase
 	clean = strings.ToLower(clean)
 
 	// Trim length (3-20 characters is common for usernames)

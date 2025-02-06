@@ -1,6 +1,6 @@
 module forum
 
-go 1.23.4
+go 1.23
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
