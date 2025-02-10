@@ -32,7 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
-
+    "github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
     // Call the setup function
     setupPostFilters();
     saveAllPosts();
@@ -103,10 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     
-    document.getElementById('created-posts').addEventListener('click', (event) => {
-        event.preventDefault(); 
-        filterPostsByUser(); // Filter posts
-    });
+    // document.getElementById('created-posts').addEventListener('click', (event) => {
+    //     event.preventDefault(); 
+    //     filterPostsByUser(); // Filter posts
+    // });
 
     // Function to filter posts by likes
     function filterPostsByLikes() {
@@ -160,12 +161,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Add event listener to "Created Posts" link
-    document.getElementById('liked-posts').addEventListener('click', (event) => {
-        event.preventDefault(); // Prevent default link behavior
-        console.log('Filtering posts by user...');
+    // document.getElementById('liked-posts').addEventListener('click', (event) => {
+    //     event.preventDefault(); // Prevent default link behavior
+    //     console.log('Filtering posts by user...');
 
-        filterPostsByLikes(); // Filter posts
-    });
+    //     filterPostsByLikes(); // Filter posts
+    // });
 });
 
 document.addEventListener('DOMContentLoaded', () => {
