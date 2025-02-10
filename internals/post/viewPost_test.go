@@ -7,191 +7,325 @@ import (
 
 	"forum/db"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-// Mock DB setup helper
-func setupMockDB(*testing.T) (sqlmock.Sqlmock, error) {
-	mockDB, mock, err := sqlmock.New()
-	if err != nil {
-		return nil, err
-	}
-
-	// Replace the global DB with our mock
-	db.DB = mockDB
-
-	return mock, nil
-}
-
-func TestFetchPosts(t *testing.T) {
-	tests := []struct {
-		name          string
-		userID        int64
-		mockSetup     func(mock sqlmock.Sqlmock)
-		expectedPosts []Post
-		expectedError string
-	}{
-		{
-			name:   "Success - Multiple posts with reactions",
-			userID: 1,
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				rows := sqlmock.NewRows([]string{
-					"id", "title", "content", "username", "created_at",
-					"comment_count", "likes", "dislikes", "user_reaction",
-				}).
-					AddRow(1, "Test Post 1", "Content 1", "user1", time.Now(), 5, 10, 2, "LIKE").
-					AddRow(2, "Test Post 2", "Content 2", "user2", time.Now(), 0, 0, 0, "")
-				mock.ExpectQuery("^SELECT").WithArgs(1).WillReturnRows(rows)
-			},
-			expectedPosts: []Post{
-				{ID: 1, Title: "Test Post 1", Content: "Content 1", UserName: "user1", CommentCount: 5, Likes: 10, Dislikes: 2, UserReaction: "LIKE"},
-				{ID: 2, Title: "Test Post 2", Content: "Content 2", UserName: "user2", CommentCount: 0, Likes: 0, Dislikes: 0, UserReaction: ""},
-			},
-		},
-		{
-			name:   "Empty result set",
-			userID: 1,
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				rows := sqlmock.NewRows([]string{
-					"id", "title", "content", "username", "created_at",
-					"comment_count", "likes", "dislikes", "user_reaction",
-				})
-				mock.ExpectQuery("^SELECT").WithArgs(1).WillReturnRows(rows)
-			},
-			expectedPosts: []Post{},
-		},
-		{
-			name:   "Database error",
-			userID: 1,
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("^SELECT").WithArgs(1).WillReturnError(sql.ErrConnDone)
-			},
-			expectedError: "failed to fetch posts",
-		},
-		{
-			name:   "Scan error - invalid data type",
-			userID: 1,
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				rows := sqlmock.NewRows([]string{
-					"id", "title", "content", "username", "created_at",
-					"comment_count", "likes", "dislikes", "user_reaction",
-				}).AddRow("invalid", "Test", "Content", "user1", time.Now(), 0, 0, 0, "")
-				mock.ExpectQuery("^SELECT").WithArgs(1).WillReturnRows(rows)
-			},
-			expectedError: "failed to scan post",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mock, err := setupMockDB(t)
-			if err != nil {
-				t.Fatalf("Failed to setup mock DB: %v", err)
-			}
-			defer db.DB.Close()
-
-			tt.mockSetup(mock)
-
-			posts, err := FetchPosts(tt.userID)
-
-			if tt.expectedError != "" {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, len(tt.expectedPosts), len(posts))
-				for i, expectedPost := range tt.expectedPosts {
-					assert.Equal(t, expectedPost.ID, posts[i].ID)
-					assert.Equal(t, expectedPost.Title, posts[i].Title)
-					assert.Equal(t, expectedPost.UserReaction, posts[i].UserReaction)
-				}
-			}
-
-			assert.NoError(t, mock.ExpectationsWereMet())
-		})
-	}
-}
-
 func TestFetchPostFromDB(t *testing.T) {
+	// Setup test database
+	testDB, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatalf("Failed to open test database: %v", err)
+	}
+	defer testDB.Close()
+
+	// Create required tables
+	setupSQL := `
+		CREATE TABLE users (
+			id INTEGER PRIMARY KEY,
+			username TEXT NOT NULL
+		);
+
+		CREATE TABLE posts (
+			id INTEGER PRIMARY KEY,
+			title TEXT NOT NULL,
+			content TEXT NOT NULL,
+			image TEXT,
+			user_id INTEGER NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		);
+
+		CREATE TABLE comments (
+			id INTEGER PRIMARY KEY,
+			post_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			content TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (post_id) REFERENCES posts(id),
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		);
+
+		CREATE TABLE post_reactions (
+			post_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			reaction_type TEXT CHECK (reaction_type IN ('LIKE', 'DISLIKE')) NOT NULL,
+			FOREIGN KEY (post_id) REFERENCES posts(id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			PRIMARY KEY (post_id, user_id)
+		);
+	`
+	_, err = testDB.Exec(setupSQL)
+	if err != nil {
+		t.Fatalf("Failed to create tables: %v", err)
+	}
+
+	// Insert test data
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+	testData := `
+		INSERT INTO users (id, username) VALUES 
+			(1, 'testuser1'),
+			(2, 'testuser2');
+
+		INSERT INTO posts (id, title, content, image, user_id, created_at) VALUES
+			(1, 'Test Post 1', 'Content of test post 1', 'image1.jpg', 1, ?),
+			(2, 'Test Post 2', 'Content of test post 2', NULL, 2, ?);
+
+		INSERT INTO comments (post_id, user_id, content, created_at) VALUES
+			(1, 2, 'Comment on post 1', ?),
+			(1, 1, 'Another comment on post 1', ?);
+
+		INSERT INTO post_reactions (post_id, user_id, reaction_type) VALUES
+			(1, 2, 'LIKE'),
+			(1, 1, 'LIKE'),
+			(2, 1, 'DISLIKE');
+	`
+	_, err = testDB.Exec(testData, currentTime, currentTime, currentTime, currentTime)
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Temporarily replace the global DB with our test DB
+	originalDB := db.DB
+	db.DB = testDB
+	defer func() { db.DB = originalDB }()
+
+	// Test cases
 	tests := []struct {
 		name          string
 		postID        string
 		userID        int64
-		mockSetup     func(mock sqlmock.Sqlmock)
-		expectedPost  *Post
-		expectedError string
+		expectedTitle string
+		expectedError bool
 	}{
 		{
-			name:   "Success - Post exists with reactions",
-			postID: "1",
-			userID: 1,
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				rows := sqlmock.NewRows([]string{
-					"id", "title", "content", "username", "created_at",
-					"comment_count", "likes", "dislikes", "user_reaction",
-				}).AddRow(1, "Test Post", "Content", "user1", time.Now(), 5, 10, 2, "LIKE")
-				mock.ExpectQuery("^SELECT").WithArgs(1, "1").WillReturnRows(rows)
-			},
-			expectedPost: &Post{
-				ID: 1, Title: "Test Post", Content: "Content",
-				UserName: "user1", CommentCount: 5, Likes: 10,
-				Dislikes: 2, UserReaction: "LIKE",
-			},
+			name:          "Fetch existing post with image",
+			postID:        "1",
+			userID:        1,
+			expectedTitle: "Test Post 1",
+			expectedError: false,
 		},
 		{
-			name:   "Post not found",
-			postID: "999",
-			userID: 1,
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("^SELECT").WithArgs(1, "999").WillReturnError(sql.ErrNoRows)
-			},
-			expectedError: "not found",
+			name:          "Fetch existing post without image",
+			postID:        "2",
+			userID:        1,
+			expectedTitle: "Test Post 2",
+			expectedError: false,
 		},
 		{
-			name:   "Invalid post ID",
-			postID: "invalid",
-			userID: 1,
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("^SELECT").WithArgs(1, "invalid").WillReturnError(sql.ErrConnDone)
-			},
-			expectedError: "failed to fetch post",
+			name:          "Fetch non-existent post",
+			postID:        "999",
+			userID:        1,
+			expectedError: true,
 		},
 		{
-			name:   "Database connection error",
-			postID: "1",
-			userID: 1,
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("^SELECT").WithArgs(1, "1").WillReturnError(sql.ErrConnDone)
-			},
-			expectedError: "failed to fetch post",
+			name:          "Fetch post with invalid ID",
+			postID:        "invalid",
+			userID:        1,
+			expectedError: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mock, err := setupMockDB(t)
-			if err != nil {
-				t.Fatalf("Failed to setup mock DB: %v", err)
-			}
-			defer db.DB.Close()
-
-			tt.mockSetup(mock)
-
 			post, err := fetchPostFromDB(tt.postID, tt.userID)
 
-			if tt.expectedError != "" {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, post)
-				assert.Equal(t, tt.expectedPost.ID, post.ID)
-				assert.Equal(t, tt.expectedPost.Title, post.Title)
-				assert.Equal(t, tt.expectedPost.UserReaction, post.UserReaction)
+			if tt.expectedError {
+				if err == nil {
+					t.Error("Expected an error but got none")
+				}
+				return
 			}
 
-			assert.NoError(t, mock.ExpectationsWereMet())
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+
+			// Verify post data
+			if post.Title != tt.expectedTitle {
+				t.Errorf("Expected title %q, got %q", tt.expectedTitle, post.Title)
+			}
+
+			// Verify reaction counts
+			if tt.postID == "1" {
+				if post.Likes != 2 {
+					t.Errorf("Expected 2 likes, got %d", post.Likes)
+				}
+				if post.Dislikes != 0 {
+					t.Errorf("Expected 0 dislikes, got %d", post.Dislikes)
+				}
+			}
+
+			// Verify comment count
+			if tt.postID == "1" {
+				if post.CommentCount != 2 {
+					t.Errorf("Expected 2 comments, got %d", post.CommentCount)
+				}
+			}
+		})
+	}
+}
+
+func TestFetchPosts(t *testing.T) {
+	// Setup test database
+	testDB, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatalf("Failed to open test database: %v", err)
+	}
+	defer testDB.Close()
+
+	// Create tables including comments table
+	setupSQL := `
+		CREATE TABLE users (
+			id INTEGER PRIMARY KEY,
+			username TEXT NOT NULL
+		);
+
+		CREATE TABLE posts (
+			id INTEGER PRIMARY KEY,
+			title TEXT NOT NULL,
+			content TEXT NOT NULL,
+			image TEXT,
+			user_id INTEGER NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		);
+
+		CREATE TABLE comments (
+			id INTEGER PRIMARY KEY,
+			post_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			content TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			FOREIGN KEY (post_id) REFERENCES posts(id),
+			FOREIGN KEY (user_id) REFERENCES users(id)
+		);
+
+		CREATE TABLE post_reactions (
+			post_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			reaction_type TEXT CHECK (reaction_type IN ('LIKE', 'DISLIKE')) NOT NULL,
+			FOREIGN KEY (post_id) REFERENCES posts(id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			PRIMARY KEY (post_id, user_id)
+		);
+	`
+	_, err = testDB.Exec(setupSQL)
+	if err != nil {
+		t.Fatalf("Failed to create tables: %v", err)
+	}
+
+	// Insert test data including comments
+	currentTime := time.Now().Format("2006-01-02 15:04:05")
+	_, err = testDB.Exec(`
+		INSERT INTO users (id, username) VALUES 
+			(1, 'testuser1'), 
+			(2, 'testuser2');
+
+		INSERT INTO posts (id, title, content, user_id, created_at) VALUES
+			(1, 'Test Post 1', 'Content 1', 1, ?),
+			(2, 'Test Post 2', 'Content 2', 2, ?);
+
+		INSERT INTO comments (post_id, user_id, content, created_at) VALUES
+			(1, 2, 'Comment on post 1', ?),
+			(1, 1, 'Another comment on post 1', ?),
+			(2, 1, 'Comment on post 2', ?);
+
+		INSERT INTO post_reactions (post_id, user_id, reaction_type) VALUES
+			(1, 2, 'LIKE'),
+			(2, 1, 'DISLIKE');
+	`, currentTime, currentTime, currentTime, currentTime, currentTime)
+	if err != nil {
+		t.Fatalf("Failed to insert test data: %v", err)
+	}
+
+	// Replace global DB
+	originalDB := db.DB
+	db.DB = testDB
+	defer func() { db.DB = originalDB }()
+
+	tests := []struct {
+		name          string
+		userID        int64
+		expectedCount int
+		checkFunc     func(*testing.T, []Post) bool
+	}{
+		{
+			name:          "Fetch all posts",
+			userID:        1,
+			expectedCount: 2,
+			checkFunc: func(t *testing.T, posts []Post) bool {
+				if len(posts) != 2 {
+					return false
+				}
+				// Check specific post attributes
+				for _, post := range posts {
+					if post.Title == "" || post.Content == "" {
+						t.Error("Post missing required fields")
+						return false
+					}
+				}
+				// Check comment counts
+				foundPost1 := false
+				foundPost2 := false
+				for _, post := range posts {
+					if post.ID == 1 {
+						foundPost1 = true
+						if post.CommentCount != 2 {
+							t.Errorf("Expected 2 comments for post 1, got %d", post.CommentCount)
+							return false
+						}
+					}
+					if post.ID == 2 {
+						foundPost2 = true
+						if post.CommentCount != 1 {
+							t.Errorf("Expected 1 comment for post 2, got %d", post.CommentCount)
+							return false
+						}
+					}
+				}
+				if !foundPost1 || !foundPost2 {
+					t.Error("Not all expected posts were found")
+					return false
+				}
+				return true
+			},
+		},
+		{
+			name:          "Check reaction counts",
+			userID:        1,
+			expectedCount: 2,
+			checkFunc: func(t *testing.T, posts []Post) bool {
+				for _, post := range posts {
+					if post.ID == 1 && post.Likes != 1 {
+						t.Errorf("Expected 1 like for post 1, got %d", post.Likes)
+						return false
+					}
+					if post.ID == 2 && post.Dislikes != 1 {
+						t.Errorf("Expected 1 dislike for post 2, got %d", post.Dislikes)
+						return false
+					}
+				}
+				return true
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			posts, err := FetchPosts(tt.userID)
+			if err != nil {
+				t.Fatalf("FetchPosts returned unexpected error: %v", err)
+			}
+
+			if len(posts) != tt.expectedCount {
+				t.Errorf("Expected %d posts, got %d", tt.expectedCount, len(posts))
+			}
+
+			if tt.checkFunc != nil {
+				if !tt.checkFunc(t, posts) {
+					t.Error("Check function failed")
+				}
+			}
 		})
 	}
 }

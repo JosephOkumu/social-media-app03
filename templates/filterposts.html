@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="/static/css/filterpost.css">
   <link rel="stylesheet" href="/static/css/index.css">
   <link rel="stylesheet" href="/static/styles.css" />
-  
+
 </head>
 
 <body>
@@ -104,11 +104,11 @@
       {{range .Posts}}
       <div class="post" id="post" post-id="{{ .ID}}">
         <div class="votes">
-          <button class="like-btn {{if eq .UserReaction "LIKE"}}selected{{end}}" aria-label="Upvote">
+          <button class="like-btn {{if eq .UserReaction " LIKE"}}selected{{end}}" aria-label="Upvote">
             <i class="fas fa-thumbs-up" aria-hidden="true"></i>
           </button>
           <span>{{ .Likes }}</span>
-          <button class="dislike-btn {{if eq .UserReaction "DISLIKE"}}selected{{end}}" aria-label="Downvote">
+          <button class="dislike-btn {{if eq .UserReaction " DISLIKE"}}selected{{end}}" aria-label="Downvote">
             <i class="fas fa-thumbs-down" aria-hidden="true"></i>
           </button>
           <span>{{ .Dislikes }}</span>
@@ -139,7 +139,6 @@
     </div>
     <p>2025 Forum. All rights reserved.</p>
   </footer>
-  <script src="/static/js/post.js"></script>
   <script src="/static/js/index.js"></script>
 </body>
 

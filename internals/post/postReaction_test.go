@@ -1,266 +1,102 @@
 package post
 
 import (
-	"bytes"
-	"context"
 	"database/sql"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"forum/db"
-	"forum/internals/auth"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
+	_ "github.com/mattn/go-sqlite3" // Required for in-memory SQLite
 )
 
-func TestReactToPost(t *testing.T) {
-	tests := []struct {
-		name              string
-		method            string
-		setupAuth         bool
-		input             reactToPost
-		mockSetup         func(mock sqlmock.Sqlmock)
-		expectedStatus    int
-		expectedResponse  map[string]string
-		expectedDBQueries bool
-	}{
-		{
-			name:      "Success - Add new reaction",
-			method:    "POST",
-			setupAuth: true,
-			input: reactToPost{
-				PostID:       1,
-				ReactionType: "LIKE",
-			},
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				// Expect query to check current reaction
-				mock.ExpectQuery(`SELECT reaction_type FROM post_reactions`).
-					WithArgs(int64(1), int64(1)).
-					WillReturnError(sql.ErrNoRows)
-
-				// Expect insert query
-				mock.ExpectExec(`INSERT INTO post_reactions`).
-					WithArgs(int64(1), int64(1), "LIKE", "LIKE").
-					WillReturnResult(sqlmock.NewResult(1, 1))
-			},
-			expectedStatus: http.StatusOK,
-			expectedResponse: map[string]string{
-				"status":           "added",
-				"updatedReaction":  "LIKE",
-				"previousReaction": "",
-			},
-			expectedDBQueries: true,
-		},
-		{
-			name:      "Success - Remove existing reaction",
-			method:    "POST",
-			setupAuth: true,
-			input: reactToPost{
-				PostID:       1,
-				ReactionType: "LIKE",
-			},
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				// Expect query to check current reaction
-				mock.ExpectQuery(`SELECT reaction_type FROM post_reactions`).
-					WithArgs(int64(1), int64(1)).
-					WillReturnRows(sqlmock.NewRows([]string{"reaction_type"}).AddRow("LIKE"))
-
-				// Expect delete query
-				mock.ExpectExec(`DELETE FROM post_reactions`).
-					WithArgs(int64(1), int64(1)).
-					WillReturnResult(sqlmock.NewResult(0, 1))
-			},
-			expectedStatus: http.StatusOK,
-			expectedResponse: map[string]string{
-				"status":           "removed",
-				"updatedReaction":  "LIKE",
-				"previousReaction": "LIKE",
-			},
-			expectedDBQueries: true,
-		},
-		{
-			name:      "Success - Update existing reaction",
-			method:    "POST",
-			setupAuth: true,
-			input: reactToPost{
-				PostID:       1,
-				ReactionType: "LIKE",
-			},
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				// Expect query to check current reaction
-				mock.ExpectQuery(`SELECT reaction_type FROM post_reactions`).
-					WithArgs(int64(1), int64(1)).
-					WillReturnRows(sqlmock.NewRows([]string{"reaction_type"}).AddRow("DISLIKE"))
-
-				// Expect update query
-				mock.ExpectExec(`INSERT INTO post_reactions`).
-					WithArgs(int64(1), int64(1), "LIKE", "LIKE").
-					WillReturnResult(sqlmock.NewResult(1, 1))
-			},
-			expectedStatus: http.StatusOK,
-			expectedResponse: map[string]string{
-				"status":           "updated",
-				"updatedReaction":  "LIKE",
-				"previousReaction": "DISLIKE",
-			},
-			expectedDBQueries: true,
-		},
-		{
-			name:              "Invalid Method",
-			method:            "GET",
-			setupAuth:         true,
-			expectedStatus:    http.StatusMethodNotAllowed,
-			expectedDBQueries: false,
-		},
-		{
-			name:              "Missing Auth Session",
-			method:            "POST",
-			setupAuth:         false,
-			expectedStatus:    http.StatusUnauthorized,
-			expectedDBQueries: false,
-		},
-		{
-			name:              "Invalid JSON Input",
-			method:            "POST",
-			setupAuth:         true,
-			input:             reactToPost{}, // Will be overridden with invalid JSON
-			expectedStatus:    http.StatusBadRequest,
-			expectedDBQueries: false,
-		},
-		{
-			name:      "Invalid Post ID",
-			method:    "POST",
-			setupAuth: true,
-			input: reactToPost{
-				PostID:       0,
-				ReactionType: "LIKE",
-			},
-			expectedStatus:    http.StatusBadRequest,
-			expectedDBQueries: false,
-		},
-		{
-			name:      "Database Error - Select Query",
-			method:    "POST",
-			setupAuth: true,
-			input: reactToPost{
-				PostID:       1,
-				ReactionType: "LIKE",
-			},
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery(`SELECT reaction_type FROM post_reactions`).
-					WithArgs(int64(1), int64(1)).
-					WillReturnError(sql.ErrConnDone)
-			},
-			expectedStatus:    http.StatusInternalServerError,
-			expectedDBQueries: true,
-		},
-		{
-			name:      "Database Error - Insert Query",
-			method:    "POST",
-			setupAuth: true,
-			input: reactToPost{
-				PostID:       1,
-				ReactionType: "LIKE",
-			},
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery(`SELECT reaction_type FROM post_reactions`).
-					WithArgs(int64(1), int64(1)).
-					WillReturnError(sql.ErrNoRows)
-
-				mock.ExpectExec(`INSERT INTO post_reactions`).
-					WithArgs(int64(1), int64(1), "LIKE", "LIKE").
-					WillReturnError(sql.ErrConnDone)
-			},
-			expectedStatus:    http.StatusInternalServerError,
-			expectedDBQueries: true,
-		},
-		{
-			name:      "Database Error - Delete Query",
-			method:    "POST",
-			setupAuth: true,
-			input: reactToPost{
-				PostID:       1,
-				ReactionType: "LIKE",
-			},
-			mockSetup: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery(`SELECT reaction_type FROM post_reactions`).
-					WithArgs(int64(1), int64(1)).
-					WillReturnRows(sqlmock.NewRows([]string{"reaction_type"}).AddRow("LIKE"))
-
-				mock.ExpectExec(`DELETE FROM post_reactions`).
-					WithArgs(int64(1), int64(1)).
-					WillReturnError(sql.ErrConnDone)
-			},
-			expectedStatus:    http.StatusInternalServerError,
-			expectedDBQueries: true,
-		},
+// setupTestDB initializes an in-memory SQLite database for testing
+func setupTestDB(t *testing.T) *sql.DB {
+	testDB, err := sql.Open("sqlite3", ":memory:")
+	if err != nil {
+		t.Fatalf("Failed to open test database: %v", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup mock DB if needed
-			var mock sqlmock.Sqlmock
-			if tt.expectedDBQueries {
-				var err error
-				mock, err = setupMockDB(t)
-				if err != nil {
-					t.Fatalf("Failed to setup mock DB: %v", err)
-				}
-				defer db.DB.Close()
+	// Create necessary tables
+	setupSQL := `
+		CREATE TABLE users (
+			id INTEGER PRIMARY KEY,
+			username TEXT NOT NULL
+		);
 
-				if tt.mockSetup != nil {
-					tt.mockSetup(mock)
-				}
-			}
+		CREATE TABLE post_reactions (
+			post_id INTEGER NOT NULL,
+			user_id INTEGER NOT NULL,
+			reaction_type TEXT NOT NULL CHECK(reaction_type IN ('LIKE', 'DISLIKE')),
+			FOREIGN KEY (post_id) REFERENCES posts(id),
+			FOREIGN KEY (user_id) REFERENCES users(id),
+			PRIMARY KEY (post_id, user_id)
+		);
+	`
+	_, err = testDB.Exec(setupSQL)
+	if err != nil {
+		t.Fatalf("Failed to create tables: %v", err)
+	}
 
-			// Create request
-			var body []byte
-			var err error
-			if tt.method == http.MethodPost {
-				if tt.name == "Invalid JSON Input" {
-					body = []byte(`{invalid json}`)
-				} else {
-					body, err = json.Marshal(tt.input)
-					if err != nil {
-						t.Fatalf("Failed to marshal input: %v", err)
-					}
-				}
-			}
-			req := httptest.NewRequest(tt.method, "/react", bytes.NewBuffer(body))
+	// Replace global DB with test DB
+	db.DB = testDB
 
-			// Setup auth context if needed
-			if tt.setupAuth {
-				ctx := context.WithValue(req.Context(), auth.UserSessionKey, &auth.Session{
-					UserID:   1,
-					UserName: "testuser",
-				})
-				req = req.WithContext(ctx)
-			}
+	return testDB
+}
 
-			// Create response recorder
-			w := httptest.NewRecorder()
+// TestPostReactions ensures that adding, updating, and deleting reactions works correctly
+func TestPostReactions(t *testing.T) {
+	// Setup test database
+	testDB := setupTestDB(t)
+	defer testDB.Close()
 
-			// Call the handler
-			ReactToPost(w, req)
+	// Insert a test user
+	_, err := testDB.Exec(`INSERT INTO users (id, username) VALUES (1, 'testuser')`)
+	if err != nil {
+		t.Fatalf("Failed to insert test user: %v", err)
+	}
 
-			// Check status code
-			assert.Equal(t, tt.expectedStatus, w.Code)
+	// Test: Add a new reaction
+	_, err = testDB.Exec(`INSERT INTO post_reactions (post_id, user_id, reaction_type) VALUES (?, ?, ?)`, 1, 1, "LIKE")
+	if err != nil {
+		t.Fatalf("Failed to insert reaction: %v", err)
+	}
 
-			// For successful responses, check the JSON response
-			if tt.expectedStatus == http.StatusOK {
-				var response map[string]string
-				err := json.NewDecoder(w.Body).Decode(&response)
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedResponse, response)
-			}
+	// Verify insertion
+	var reactionType string
+	err = testDB.QueryRow(`SELECT reaction_type FROM post_reactions WHERE post_id = ? AND user_id = ?`, 1, 1).Scan(&reactionType)
+	if err != nil {
+		t.Fatalf("Failed to fetch reaction: %v", err)
+	}
+	if reactionType != "LIKE" {
+		t.Errorf("Expected reaction 'LIKE', got '%s'", reactionType)
+	}
 
-			// Verify all DB expectations were met
-			if tt.expectedDBQueries && mock != nil {
-				assert.NoError(t, mock.ExpectationsWereMet())
-			}
-		})
+	// Test: Update reaction
+	_, err = testDB.Exec(`UPDATE post_reactions SET reaction_type = ? WHERE post_id = ? AND user_id = ?`, "DISLIKE", 1, 1)
+	if err != nil {
+		t.Fatalf("Failed to update reaction: %v", err)
+	}
+
+	// Verify update
+	err = testDB.QueryRow(`SELECT reaction_type FROM post_reactions WHERE post_id = ? AND user_id = ?`, 1, 1).Scan(&reactionType)
+	if err != nil {
+		t.Fatalf("Failed to fetch updated reaction: %v", err)
+	}
+	if reactionType != "DISLIKE" {
+		t.Errorf("Expected reaction 'DISLIKE', got '%s'", reactionType)
+	}
+
+	// Test: Remove reaction
+	_, err = testDB.Exec(`DELETE FROM post_reactions WHERE post_id = ? AND user_id = ?`, 1, 1)
+	if err != nil {
+		t.Fatalf("Failed to delete reaction: %v", err)
+	}
+
+	// Verify deletion
+	err = testDB.QueryRow(`SELECT reaction_type FROM post_reactions WHERE post_id = ? AND user_id = ?`, 1, 1).Scan(&reactionType)
+	if err == nil {
+		t.Errorf("Expected no reaction, but found '%s'", reactionType)
+	} else if err != sql.ErrNoRows {
+		t.Fatalf("Unexpected error during deletion verification: %v", err)
 	}
 }

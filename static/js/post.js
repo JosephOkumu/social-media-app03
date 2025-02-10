@@ -4,7 +4,7 @@ fetch("/categories")
   .then((categories) => {
     const categoriesGrid = document.getElementById("categories-grid");
     categoriesGrid.className = "categories-grid";
-    
+
     const icons = {
       'Technology': 'fas fa-microchip',
       'Health': 'fas fa-heartbeat',
@@ -17,29 +17,28 @@ fetch("/categories")
       'Lifestyle': 'fas fa-cogs',
       'Politics': 'fas fa-landmark'
     };
-    
+
     categories.forEach((category) => {
       const label = document.createElement("label");
       label.className = "category-checkbox";
-      
+
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.name = "categories[]";
       checkbox.value = category.ID;
-      
+
       const icon = document.createElement("i");
       icon.className = icons[category.Name] || 'fas fa-tag';
-      
+
       const span = document.createElement("span");
       span.textContent = category.Name;
-      
+
       label.appendChild(checkbox);
       label.appendChild(icon);
       label.appendChild(span);
       categoriesGrid.appendChild(label);
     });
   })
-  .catch((error) => console.error("Error fetching categories:", error));
 
 class NotificationManager {
   constructor() {
@@ -102,7 +101,7 @@ class NotificationManager {
 const notificationManager = new NotificationManager();
 
 // Handle form submission
-document.querySelector("form").addEventListener("submit", async function(event) {
+document.querySelector("form").addEventListener("submit", async function (event) {
   event.preventDefault();
 
   // Validate form inputs
@@ -116,81 +115,81 @@ document.querySelector("form").addEventListener("submit", async function(event) 
   const maxSizeInBytes = 20 * 1024 * 1024;
   if (image && image.size > maxSizeInBytes) {
     notificationManager.show("Image size exceeds the limit of 20MB.", "error");
-    return; 
+    return;
   }
 
   // Input validation
   if (title.length > 50) {
-      notificationManager.show("Title exceeds 50 characters.", "error");
-      return;
+    notificationManager.show("Title exceeds 50 characters.", "error");
+    return;
   }
   if (title.length < 2) {
-      notificationManager.show("Title is too short.", "error");
-      return;
+    notificationManager.show("Title is too short.", "error");
+    return;
   }
   if (content.length < 5) {
-      notificationManager.show("Content is too short.", "error");
-      return;
+    notificationManager.show("Content is too short.", "error");
+    return;
   }
   if (content.length > 500) {
-      notificationManager.show("Content exceeds Limit.", "error");
-      return;
+    notificationManager.show("Content exceeds Limit.", "error");
+    return;
   }
   if (categories.length === 0) {
-      notificationManager.show("Please select at least one category.", "error");
-      return;
+    notificationManager.show("Please select at least one category.", "error");
+    return;
   }
 
   try {
-      // Handle image upload first if an image is selected
-      if (image) {
-          const imageData = new FormData();
-          imageData.append("image", image);
+    // Handle image upload first if an image is selected
+    if (image) {
+      const imageData = new FormData();
+      imageData.append("image", image);
 
-          const imageResponse = await fetch("/upload-image", {
-              method: "POST",
-              body: imageData
-          });
-
-          if (!imageResponse.ok) {
-              const errorData = await imageResponse.json();
-              throw new Error(errorData.error || `Image upload failed: ${imageResponse.statusText}`);
-          }
-
-          // Wait for the image upload response
-          await imageResponse.json();
-      }
-
-      // Proceed with creating the post after successful image upload
-      const postData = new URLSearchParams();
-      postData.append("title", title);
-      postData.append("content", content);
-      categories.forEach(category => postData.append("categories[]", category));
-
-      const postResponse = await fetch("/create-post", {
-          method: "POST",
-          body: postData
+      const imageResponse = await fetch("/upload-image", {
+        method: "POST",
+        body: imageData
       });
 
-      if (!postResponse.ok) {
-          const errorData = await postResponse.json();
-          throw new Error(errorData.message || `Post creation failed: ${postResponse.statusText}`);
+      if (!imageResponse.ok) {
+        const errorData = await imageResponse.json();
+        throw new Error(errorData.error || `Image upload failed: ${imageResponse.statusText}`);
       }
 
-      if (postResponse.redirected) {
-          notificationManager.show("Post created successfully!", "success");
-          // Add a small delay before redirect to show the success message
-          setTimeout(() => {
-              window.location.href = postResponse.url;
-          }, 2000);
-      }
+      // Wait for the image upload response
+      await imageResponse.json();
+    }
+
+    // Proceed with creating the post after successful image upload
+    const postData = new URLSearchParams();
+    postData.append("title", title);
+    postData.append("content", content);
+    categories.forEach(category => postData.append("categories[]", category));
+
+    const postResponse = await fetch("/create-post", {
+      method: "POST",
+      body: postData
+    });
+
+    if (!postResponse.ok) {
+      const errorData = await postResponse.json();
+      throw new Error(errorData.message || `Post creation failed: ${postResponse.statusText}`);
+    }
+
+    if (postResponse.redirected) {
+      notificationManager.show("Post created successfully!", "success");
+      // Add a small delay before redirect to show the success message
+      setTimeout(() => {
+        window.location.href = postResponse.url;
+      }, 2000);
+    }
 
   } catch (error) {
-      console.error("Error:", error);
-      notificationManager.show(
-           "Failed to process your request, likely due to invalid image size above 20mbs",
-          "error"
-      );
+    console.error("Error:", error);
+    notificationManager.show(
+      "Failed to process your request, likely due to invalid image size above 20mbs",
+      "error"
+    );
   }
 });
 

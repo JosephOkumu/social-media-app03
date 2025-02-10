@@ -31,7 +31,7 @@
         alt="Google logo">
       Continue with Google
     </button>
-    
+
     <button class="google-btn" onclick="window.location.href='/auth/github'">
       <img src="static/images/github-mark.svg" alt="GitHub logo">
       Continue with GitHub
@@ -59,7 +59,8 @@
           <input type="password" id="password" name="password" placeholder=" " required aria-label="Password">
           <label for="password">Password</label>
           <button type="button" class="password-toggle" aria-label="Toggle password visibility">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-linecap="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
               <circle cx="12" cy="12" r="3"></circle>
             </svg>
@@ -73,7 +74,7 @@
 
     <div class="signup-link">
       <p>Don't have an account? <a href="/signup">Sign up here</a></p>
-      <p>Go back home? <a href="/">Home</a></p>
+      <p>Go back <a href="/">home</a></p>
     </div>
   </div>
 
@@ -133,11 +134,11 @@
       }
     });
 
-        // Password visibility toggle
-        document.querySelector('.password-toggle').addEventListener('click', function() {
+    // Password visibility toggle
+    document.querySelector('.password-toggle').addEventListener('click', function () {
       const passwordInput = document.getElementById('password');
       const eyeIcon = this.querySelector('svg');
-      
+
       if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
         eyeIcon.innerHTML = `

@@ -33,11 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     "github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/assert"
     // Call the setup function
     setupPostFilters();
     saveAllPosts();
-    
+
     // Function to save all current posts to localStorage
     function saveAllPosts() {
         const posts = Array.from(document.querySelectorAll('.post')).map(post => ({
@@ -52,6 +52,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function showNotification(message) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.classList.remove('hidden');
+        notification.style.display = 'block';
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 2000);
+    }
+
     // Function to filter posts by user
     function filterPostsByUser() {
         fetch('/userfilter')
@@ -63,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(userPostIds => {
                 if (!userPostIds || userPostIds.length === 0) {
-                    console.warn("No posts found for this user.");
+                    showNotification("No created posts found.")
                     return;
                 }
 
@@ -83,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const postElement = document.createElement('div');
                         postElement.innerHTML = matchingPost.html;
 
-                        
+
                         postElement.firstChild.classList.add('user-post');
 
                         feedElement.appendChild(postElement.firstChild);
@@ -93,21 +105,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             })
             .catch(error => {
-               
+
                 if (error.name === 'SyntaxError') {
-                    alert('Please log in to filter posts by user.');
+                    showNotification('Please log in to filter posts by user.');
                 } else {
                     console.error('Error filtering posts:', error);
-                    alert('Error filtering posts. Please try again.');
+                    showNotification('Error filtering posts. Please try again.');
                 }
             });
     }
-
-    
-    // document.getElementById('created-posts').addEventListener('click', (event) => {
-    //     event.preventDefault(); 
-    //     filterPostsByUser(); // Filter posts
-    // });
 
     // Function to filter posts by likes
     function filterPostsByLikes() {
@@ -120,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(userPostIds => {
                 if (!userPostIds || userPostIds.length === 0) {
-                    console.warn("No posts found for this user.");
+                    showNotification("No liked posts found");
                     return;
                 }
 
@@ -151,22 +157,14 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(error => {
                 if (error.name === 'SyntaxError') {
-                    alert('Please log in to filter posts by likes.');
+                    showNotification('Please log in to filter posts by likes.');
                 } else {
                     console.error('Error filtering posts:', error);
-                    alert('Error filtering posts. Please try again.');
+                    showNotification('Error filtering posts. Please try again.');
                 }
-                
+
             });
     }
-
-    // Add event listener to "Created Posts" link
-    // document.getElementById('liked-posts').addEventListener('click', (event) => {
-    //     event.preventDefault(); // Prevent default link behavior
-    //     console.log('Filtering posts by user...');
-
-    //     filterPostsByLikes(); // Filter posts
-    // });
 });
 
 document.addEventListener('DOMContentLoaded', () => {
