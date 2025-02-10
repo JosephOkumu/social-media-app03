@@ -39,7 +39,6 @@ fetch("/categories")
       categoriesGrid.appendChild(label);
     });
   })
-  .catch((error) => console.error("Error fetching categories:", error));
 
 class NotificationManager {
   constructor() {
