@@ -33,11 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     "github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/assert"
     // Call the setup function
     setupPostFilters();
     saveAllPosts();
-    
+
     // Function to save all current posts to localStorage
     function saveAllPosts() {
         const posts = Array.from(document.querySelectorAll('.post')).map(post => ({
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         notification.textContent = message;
         notification.classList.remove('hidden');
         notification.style.display = 'block';
-    
+
         // Hide after 3 seconds
         setTimeout(() => {
             notification.style.display = 'none';
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const postElement = document.createElement('div');
                         postElement.innerHTML = matchingPost.html;
 
-                        
+
                         postElement.firstChild.classList.add('user-post');
 
                         feedElement.appendChild(postElement.firstChild);
@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             })
             .catch(error => {
-               
+
                 if (error.name === 'SyntaxError') {
                     showNotification('Please log in to filter posts by user.');
                 } else {
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.error('Error filtering posts:', error);
                     showNotification('Error filtering posts. Please try again.');
                 }
-                
+
             });
     }
 });
