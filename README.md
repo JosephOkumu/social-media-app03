@@ -1,4 +1,4 @@
-# forum-authentication
+# social-media-app-authentication
 
 [![Go Report Card](https://img.shields.io/badge/go_version-1.23.4-green
 )](https://go.dev/dl/
